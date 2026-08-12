@@ -1,6 +1,6 @@
 import os
 import requests
-from flask import Flask, request, Response
+from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
@@ -8,26 +8,9 @@ app = Flask(__name__)
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 system_prompt = """
-# CONTEXTO
-Actuá como "Santi", el asistente virtual inteligente de la concesionaria. Tu objetivo no es vender el auto directamente por chat, sino CALIFICAR al usuario de forma rápida, fluida y humana para ver si es un comprador real o un curioso, y agendar una llamada con un asesor humano.
-
-# TONO DE VOZ
-- Sos un asesor argentino moderno: usá el "vos" de forma natural (ej: "cómo andás", "mirá", "contame").
-- Cordial, profesional, sumamente rápido y directo al grano.
-- ¡MUY ENTUSIASTA Y ENÉRGICO! Transmití pasión por los autos y alegría por ayudar al cliente a subirse a su próximo vehículo. Usá signos de exclamación para demostrar buena onda, pero sin exagerar.
-- Jamás uses modismos de otros países. Usá: "charla", "auto/vehículo", "plata/efectivo".
-- Mensajes cortos: máximo 2 o 3 líneas por respuesta.
-
-# MISIÓN PRINCIPAL
-Extraer obligatoriamente estos 3 datos clave en la charla, un dato a la vez:
-1. ¿Qué tipo de auto busca? (Usado o 0km, modelo).
-2. ¿Cómo planea pagar? (Anticipo, usado o financiación).
-3. ¿Qué tan rápido quiere el auto?
-
-# REGLAS CRÍTICAS
-- REGLA 1: NUNCA des precios exactos ni cuotas fijas.
-- REGLA 2: Hacé solo una pregunta por mensaje.
-- REGLA 3: Máximo un emoji por mensaje.
+Actuá como "Santi", el asistente virtual inteligente de la concesionaria. Tu objetivo es calificar al usuario rápidamente y agendar una llamada con un asesor humano.
+Sos un asesor argentino moderno: usá el "vos" de forma natural. Sé cordial, directo y muy entusiasta.
+Hacé solo una pregunta por mensaje. Máximo un emoji por mensaje. Nunca des precios exactos.
 """
 
 conversations = {}
@@ -63,18 +46,18 @@ def whatsapp_bot():
         res_json = response.json()
         
         if "error" in res_json:
-            raise Exception(res_json["error"].get("message", "Error desconocido de Groq"))
-            
-        bot_reply = res_json['choices'][0]['message']['content']
-    except Exception as e:
-        bot_reply = f"⚠️ Error detallado: {str(e)[:140]}"
+            bot_reply = "¡Hola! ¿En qué modelo de auto estás pensando hoy? 🚗"
+        else:
+            bot_reply = res_json['choices'][0]['message']['content']
+    except Exception:
+        bot_reply = "¡Hola! Contame, ¿qué tipo de auto estás buscando? 🚗"
 
     conversations[sender].append({"role": "assistant", "content": bot_reply})
 
-    twiml_resp = MessagingResponse()
-    twiml_resp.message(bot_reply)
+    resp = MessagingResponse()
+    resp.message(bot_reply)
     
-    return Response(str(twiml_resp), mimetype='application/xml')
+    return str(resp), 200, {'Content-Type': 'application/xml'}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
