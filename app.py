@@ -62,13 +62,11 @@ def whatsapp_bot():
         response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers)
         res_json = response.json()
         
-        # Si la API de Groq devuelve un error, lo atrapamos acá mismo
         if "error" in res_json:
             raise Exception(res_json["error"].get("message", "Error desconocido de Groq"))
             
         bot_reply = res_json['choices'][0]['message']['content']
     except Exception as e:
-        # Esto te mostrará el error exacto en WhatsApp para saber qué falla
         bot_reply = f"⚠️ Error detallado: {str(e)[:140]}"
 
     conversations[sender].append({"role": "assistant", "content": bot_reply})
@@ -78,5 +76,5 @@ def whatsapp_bot():
     return str(twiml_resp)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
-.
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
