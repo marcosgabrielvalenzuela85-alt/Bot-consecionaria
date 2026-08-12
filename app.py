@@ -38,9 +38,19 @@ Debés extraer obligatoriamente estos 3 datos clave en la charla, UN DATO A LA V
 - REGLA 4 (USO DE EMOJIS): Podés usar como MÁXIMO UN (1) emoji por mensaje para reforzar el entusiasmo (ej: 🚗 o 👍). Nunca uses dos o más en la misma respuesta.
 """
 
+conversations = {}
+
 @app.route("/", methods=["POST"])
 def whatsapp_bot():
     incoming_msg = request.values.get('Body', '').strip()
+    sender = request.values.get('From', 'default_user')
+    
+    if sender not in conversations:
+        conversations[sender] = []
+        
+    conversations[sender].append({"role": "user", "content": incoming_msg})
+    
+    messages = [{"role": "system", "content": system_prompt}] + conversations[sender]
     
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -49,10 +59,7 @@ def whatsapp_bot():
     
     payload = {
         "model": "llama-3.3-70b-versatile",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": incoming_msg}
-        ],
+        "messages": messages,
         "temperature": 0.7
     }
     
@@ -62,6 +69,8 @@ def whatsapp_bot():
         bot_reply = res_json['choices'][0]['message']['content']
     except Exception as e:
         bot_reply = "¡Hola! Disculpa, tuve un pequeño problema técnico, ¿me repetís tu consulta por favor? 🚗"
+
+    conversations[sender].append({"role": "assistant", "content": bot_reply})
 
     twiml_resp = MessagingResponse()
     twiml_resp.message(bot_reply)
