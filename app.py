@@ -1,6 +1,6 @@
 import os
 import requests
-from flask import Flask, request
+from flask import Flask, request, Response
 from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
@@ -50,14 +50,14 @@ def whatsapp_bot():
         else:
             bot_reply = res_json['choices'][0]['message']['content']
     except Exception:
-        bot_reply = "¡Hola! Contame, ¿qué tipo de auto estás buscando? 🚗"
+        bot_reply = "¡Hola! Contame, qué tipo de auto estás buscando? 🚗"
 
     conversations[sender].append({"role": "assistant", "content": bot_reply})
 
-    # Usar la forma nativa de Twilio para retornar XML sin errores de tipo
     resp = MessagingResponse()
     resp.message(bot_reply)
-    return str(resp)
+    
+    return Response(str(resp), mimetype='application/xml')
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
