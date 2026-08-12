@@ -54,10 +54,10 @@ def whatsapp_bot():
 
     conversations[sender].append({"role": "assistant", "content": bot_reply})
 
+    # Usar la forma nativa de Twilio para retornar XML sin errores de tipo
     resp = MessagingResponse()
     resp.message(bot_reply)
-    
-    return str(resp), 200, {'Content-Type': 'application/xml'}
+    return str(resp)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
