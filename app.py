@@ -1,6 +1,6 @@
 import os
 import requests
-from flask import Flask, request
+from flask import Flask, request, Response
 from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
@@ -73,7 +73,8 @@ def whatsapp_bot():
 
     twiml_resp = MessagingResponse()
     twiml_resp.message(bot_reply)
-    return str(twiml_resp)
+    
+    return Response(str(twiml_resp), mimetype='application/xml')
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
